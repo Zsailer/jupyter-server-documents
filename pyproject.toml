@@ -34,6 +34,7 @@ dependencies = [
     # require memory leak fix for:
     # https://github.com/y-crdt/pycrdt/issues/371
     "pycrdt>=0.12.49",
+    "nextgen-kernels-api>=0.6.0",
 ]
 dynamic = ["version", "description", "authors", "urls", "keywords"]
 
