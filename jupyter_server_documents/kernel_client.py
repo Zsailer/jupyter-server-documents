@@ -226,35 +226,3 @@ class DocumentAwareKernelClient(JupyterServerKernelClient):
 
 class DocumentAwareSparkProvisionerAwareKernelClient(DocumentAwareKernelClient, GatewayKernelClient):
     pass
-
-from jupyter_server.utils import url_path_join
-from tornado.escape import utf8, url_escape
-
-class SparkProvisionerAwareKernelManager(KernelManager):
-    client_class = DocumentAwareSparkProvisionerAwareKernelClient
-    client_factory = DocumentAwareSparkProvisionerAwareKernelClient
-
-    def get_connection_info(self, session: bool = False) -> KernelConnectionInfo:
-        info = super().get_connection_info(session)
-
-        #generate gateway websocket url with kernel_id. And set it to the client.
-        if self.provisioner:
-            gateway_url = url_path_join(
-                self.provisioner.jupyter_gateway_url,
-                "/api/kernels",
-                url_escape(utf8(self.provisioner.remote_kernel_id)),
-                f"channels",
-            )
-
-            if gateway_url.startswith("https"):
-                gateway_url = gateway_url.lower().replace(
-                    "https://", "wss://"
-                )
-            else:
-                gateway_url = gateway_url.lower().replace(
-                    "http://", "ws://"
-                )
-
-            info["ws_url"] = gateway_url
-        return info
-    
