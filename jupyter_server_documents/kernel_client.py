@@ -52,17 +52,17 @@ class DocumentAwareKernelClient(JupyterServerKernelClient):
         # Combines state updates and outputs to share deserialization logic
         self.add_listener(
             self._handle_document_messages,
-            msg_types=[
-                ("kernel_info_reply", "shell"),
-                ("status", "iopub"),
-                ("execute_input", "iopub"),
-                ("stream", "iopub"),
-                ("display_data", "iopub"),
-                ("execute_result", "iopub"),
-                ("error", "iopub"),
-                ("update_display_data", "iopub"),
-                ("clear_output", "iopub"),
-            ],
+            # msg_types=[
+            #     ("kernel_info_reply", "shell"),
+            #     ("status", "iopub"),
+            #     ("execute_input", "iopub"),
+            #     ("stream", "iopub"),
+            #     ("display_data", "iopub"),
+            #     ("execute_result", "iopub"),
+            #     ("error", "iopub"),
+            #     ("update_display_data", "iopub"),
+            #     ("clear_output", "iopub"),
+            # ],
         )
         
     async def _handle_document_messages(self, channel_name: str, msg: list[bytes]):
