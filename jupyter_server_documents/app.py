@@ -104,16 +104,16 @@ class ServerDocsApp(ExtensionApp):
             c.KernelManager.client_factory = "jupyter_server_documents.kernel_client.DocumentAwareKernelClient"
 
         # Configure websocket message filtering
-        if not server_app.config.KernelClientWebsocketConnection.get("exclude_msg_types"):
-            c.KernelClientWebsocketConnection.exclude_msg_types = [
-                ("status", "iopub"),
-                ("stream", "iopub"),
-                ("display_data", "iopub"),
-                ("execute_result", "iopub"),
-                ("error", "iopub"),
-                ("update_display_data", "iopub"),
-                ("clear_output", "iopub"),
-            ]
+        # if not server_app.config.KernelClientWebsocketConnection.get("exclude_msg_types"):
+        #     c.KernelClientWebsocketConnection.exclude_msg_types = [
+        #         ("status", "iopub"),
+        #         ("stream", "iopub"),
+        #         ("display_data", "iopub"),
+        #         ("execute_result", "iopub"),
+        #         ("error", "iopub"),
+        #         ("update_display_data", "iopub"),
+        #         ("clear_output", "iopub"),
+        #     ]
 
         server_app.update_config(c)
         super()._link_jupyter_server_extension(server_app)
