@@ -12,6 +12,9 @@ import asyncio
 import typing as t
 
 from nextgen_kernels_api.services.kernels.client import JupyterServerKernelClient
+from nextgen_kernels_api.gateway.managers import GatewayKernelClient, GatewayKernelManager
+from nextgen_kernels_api.services.kernels.kernelmanager import KernelManager
+from jupyter_client import KernelConnectionInfo
 from nextgen_kernels_api.services.kernels.message_utils import extract_src_id, extract_channel
 from traitlets import Instance, Set, Type, default
 
@@ -49,17 +52,17 @@ class DocumentAwareKernelClient(JupyterServerKernelClient):
         # Combines state updates and outputs to share deserialization logic
         self.add_listener(
             self._handle_document_messages,
-            msg_types=[
-                ("kernel_info_reply", "shell"),
-                ("status", "iopub"),
-                ("execute_input", "iopub"),
-                ("stream", "iopub"),
-                ("display_data", "iopub"),
-                ("execute_result", "iopub"),
-                ("error", "iopub"),
-                ("update_display_data", "iopub"),
-                ("clear_output", "iopub"),
-            ],
+            # msg_types=[
+            #     ("kernel_info_reply", "shell"),
+            #     ("status", "iopub"),
+            #     ("execute_input", "iopub"),
+            #     ("stream", "iopub"),
+            #     ("display_data", "iopub"),
+            #     ("execute_result", "iopub"),
+            #     ("error", "iopub"),
+            #     ("update_display_data", "iopub"),
+            #     ("clear_output", "iopub"),
+            # ],
         )
         
     async def _handle_document_messages(self, channel_name: str, msg: list[bytes]):
@@ -220,3 +223,6 @@ class DocumentAwareKernelClient(JupyterServerKernelClient):
             self.log.debug(f"Error handling awareness for incoming message: {e}")
 
         super().handle_incoming_message(channel_name, msg)
+
+class DocumentAwareSparkProvisionerAwareKernelClient(DocumentAwareKernelClient, GatewayKernelClient):
+    pass

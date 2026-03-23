@@ -5,7 +5,6 @@ from jupyter_server.serverapp import ServerApp
 from jupyter_server_fileid.manager import BaseFileIdManager
 from jupyter_server_documents.rooms.yroom_manager import YRoomManager
 from jupyter_server_documents.rooms.yroom import YRoom
-from jupyter_server_documents.kernel_client import DocumentAwareKernelClient
 
 
 class YDocSessionManager(SessionManager): 
