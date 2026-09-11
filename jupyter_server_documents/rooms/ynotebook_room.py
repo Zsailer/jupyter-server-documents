@@ -340,7 +340,12 @@ class YNotebookRoom(YRoom):
             pass
 
     async def _run_item(self, item: _ExecutionItem) -> None:
-        """Execute one queued cell using execute_interactive."""
+        """Execute one queued cell.
+
+        Sends ``execute_request`` on the shell channel and awaits iopub messages
+        via the client's async channel API until we see ``status: idle`` for our
+        request.
+        """
         ycell = item.ycell
 
         if item.clear_outputs:
@@ -358,7 +363,7 @@ class YNotebookRoom(YRoom):
         # We write it atomically with execution_state='idle' after completion.
         _execution_count = None
 
-        def output_hook(msg: dict) -> None:
+        def process(msg: dict) -> None:
             nonlocal _execution_count
             msg_type = msg["header"]["msg_type"]
             content = msg.get("content", {})
@@ -383,11 +388,29 @@ class YNotebookRoom(YRoom):
 
         try:
             assert self._kernel_client is not None
-            await self._kernel_client._async_execute_interactive(
+            client = self._kernel_client
+            # Send execute_request and remember its msg_id so we can filter
+            # iopub messages for parent_header.msg_id == msg_id.
+            msg_id = client.execute(
                 str(ycell.get("source", "")),
-                output_hook=output_hook,
                 allow_stdin=False,
             )
+            iopub = client.iopub_channel
+            while True:
+                # get_msg on the async channel uses zmq.asyncio.Socket.poll
+                # which properly yields — unlike zmq.Poller.poll used by
+                # _async_execute_interactive.
+                msg = await iopub.get_msg(timeout=None)
+                if msg["parent_header"].get("msg_id") != msg_id:
+                    # Not our request — ignore.
+                    continue
+                process(msg)
+                if (
+                    msg["header"]["msg_type"] == "status"
+                    and msg["content"].get("execution_state") == "idle"
+                ):
+                    break
+
             # Write execution_count and state together so the frontend
             # sees them in the same YDoc transaction — avoids a brief
             # flash where the count shows before the state clears [*].
@@ -396,9 +419,9 @@ class YNotebookRoom(YRoom):
                 ycell["execution_count"] = _execution_count
             self.log.debug("execute_cell completed: cell_id=%s outputs_len=%s",
                           item.cell_id, len(ycell.get("outputs", [])))
-        except TimeoutError:
+        except asyncio.CancelledError:
             ycell["execution_state"] = "idle"
-            self.log.warning("Cell %s execution timed out", item.cell_id)
+            raise
         except Exception as e:
             ycell["execution_state"] = "idle"
             self.log.error("execute_cell error cell_id=%s: %s", item.cell_id, e)
